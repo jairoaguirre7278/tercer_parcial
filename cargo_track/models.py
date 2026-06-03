@@ -14,7 +14,7 @@ class Cliente(SQLModel, table=True):
     nombre: str = Field(max_length=100)
     email: str = Field(unique=True, max_length=150)
     telefono: Optional[str] = Field(default=None, max_length=20)
-
+    
     envios: List["Envio"] = Relationship(back_populates="cliente")
 
 
@@ -26,7 +26,7 @@ class Envio(SQLModel, table=True):
     peso: float
     descripcion: Optional[str] = Field(default=None)
     estado: EstadoEnvio = Field(default=EstadoEnvio.PENDIENTE)
-
+    cliente_id: int = Field(foreign_key="cliente.id")
     cliente: Optional[Cliente] = Relationship(back_populates="envios")
 
 class ConductorRuta(SQLModel, table=True):
@@ -59,3 +59,11 @@ class Ruta(SQLModel, table=True):
         back_populates="rutas", link_model=ConductorRuta
     )
 
+
+class ConductorRuta(SQLModel, table=True):
+    conductor_id: Optional[int] = Field(
+        default=None, foreign_key="conductor.id", primary_key=True
+    )
+    ruta_id: Optional[int] = Field(
+        default=None, foreign_key="ruta.id", primary_key=True
+    )
