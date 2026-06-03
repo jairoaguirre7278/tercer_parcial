@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from .database import create_db_and_tables
+from .routers import envios
 
 
 @asynccontextmanager
@@ -15,6 +16,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.include_router(envios.router)
 
 
 @app.get("/")
