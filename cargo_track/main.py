@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from .database import create_db_and_tables
-from .routers import envios
+from .routers import envios, clientes
 
 
 @asynccontextmanager
@@ -17,6 +17,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.include_router(clientes.router)
 app.include_router(envios.router)
 
 
