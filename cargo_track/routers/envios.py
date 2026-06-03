@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from ..database import get_session
-from ..models import Envio
-from ..schemas import EnvioRead
+from ..models import Envio, Cliente, EstadoEnvio
+from ..schemas import EnvioCreate, EnvioRead, EnvioUpdate, CambioEstado
+from ..auth import verificar_api_key
+
 
 router = APIRouter(prefix="/envios", tags=["Envíos"])
 
@@ -17,4 +19,47 @@ def obtener_envio(envio_id: int, session: Session = Depends(get_session)):
     envio = session.get(Envio, envio_id)
     if not envio:
         raise HTTPException(status_code=404, detail="Envío no encontrado")
+    return envio
+
+
+@router.delete("/{envio_id}", status_code=204)
+def eliminar_envio(
+    envio_id: int,
+    session: Session = Depends(get_session),
+    _: str = Depends(verificar_api_key),
+):
+    envio = session.get(Envio, envio_id)
+    if not envio:
+        raise HTTPException(status_code=404, detail="Envío no encontrado")
+    session.delete(envio)
+    session.commit()
+
+
+TRANSICIONES_VALIDAS = {
+    EstadoEnvio.PENDIENTE: [EstadoEnvio.EN_TRANSITO, EstadoEnvio.CANCELADO],
+    EstadoEnvio.EN_TRANSITO: [EstadoEnvio.ENTREGADO, EstadoEnvio.CANCELADO],
+    EstadoEnvio.ENTREGADO: [],
+    EstadoEnvio.CANCELADO: [],
+}
+
+
+@router.patch("/{envio_id}/estado", response_model=EnvioRead)
+def cambiar_estado(
+    envio_id: int,
+    cambio: CambioEstado,
+    session: Session = Depends(get_session),
+    _: str = Depends(verificar_api_key),
+):
+    envio = session.get(Envio, envio_id)
+    if not envio:
+        raise HTTPException(status_code=404, detail="Envío no encontrado")
+    if cambio.estado not in TRANSICIONES_VALIDAS[envio.estado]:
+        raise HTTPException(
+            status_code=422,
+            detail=f"No se puede cambiar de {envio.estado} a {cambio.estado}",
+        )
+    envio.estado = cambio.estado
+    session.add(envio)
+    session.commit()
+    session.refresh(envio)
     return envio
