@@ -1,6 +1,17 @@
 import streamlit as st
-from api_client import get, post, patch, APIError
+from api_client import get, post, patch, delete, APIError
 
+
+COLORES_ESTADO = {
+    "PENDIENTE": "🟡",
+    "EN_TRANSITO": "🔵",
+    "ENTREGADO": "🟢",
+    "CANCELADO": "🔴",
+}
+
+
+def _badge_estado(estado: str) -> str:
+    return f"{COLORES_ESTADO.get(estado, '⚪')} {estado}"
 
 def mostrar():
     st.title("Gestión de Envíos")
@@ -28,6 +39,11 @@ def mostrar():
 
 
 def _tab_lista():
+    col_titulo, col_reload = st.columns([4, 1])
+    col_titulo.subheader("Envíos registrados")
+    if col_reload.button("Actualizar", use_container_width=True):
+        st.rerun()
+        
     st.subheader("Envíos registrados")
 
     filtro = st.selectbox(
@@ -66,6 +82,19 @@ def _tab_lista():
         use_container_width=True,
         hide_index=True,
     )
+    st.divider()
+    with st.expander("Eliminar un envío"):
+        envio_id_del = st.number_input(
+            "ID del envío a eliminar", min_value=1, step=1, key="del_id"
+        )
+        confirmar = st.checkbox("Confirmo que quiero eliminar este envío")
+        if st.button("Eliminar", disabled=not confirmar, type="primary"):
+            try:
+                delete(f"/envios/{int(envio_id_del)}")
+                st.success(f"Envío #{int(envio_id_del)} eliminado.")
+                st.rerun()
+            except APIError as e:
+                st.error(f"Error {e.status_code}: {e.mensaje}")
 
 
 def _tab_crear():
