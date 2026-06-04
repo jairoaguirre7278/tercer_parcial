@@ -12,11 +12,28 @@ async def lifespan(app: FastAPI):
     yield
 
 
+tags_metadata = [
+    {
+        "name": "Envíos",
+        "description": "Gestión de envíos: crear, consultar, actualizar estado y eliminar.",
+    },
+    {
+        "name": "Clientes",
+        "description": "Registro y consulta de clientes del sistema Cargo Track.",
+    },
+    {
+        "name": "Conductores",
+        "description": "Registro y consulta de conductores.",
+    },
+]
+
+
 app = FastAPI(
     title="Cargo Track API",
-    description="API para gestión de envíos logísticos",
+    description="API REST para gestión de envíos logísticos de Cargo Track",
     version="1.0.0",
     lifespan=lifespan,
+    openapi_tags=tags_metadata,
 )
 
 
