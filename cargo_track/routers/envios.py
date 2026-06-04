@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from ..database import get_session
-from ..models import Envio, Cliente, EstadoEnvio
+from ..models import Envio, Cliente, EstadoEnvio. HistorialEstado
 from ..schemas import EnvioCreate, EnvioRead, EnvioUpdate, CambioEstado
 from ..auth import verificar_api_key, get_current_user
 
@@ -97,7 +97,7 @@ def cambiar_estado(
     envio_id: int,
     cambio: CambioEstado,
     session: Session = Depends(get_session),
-    _: dict = Depends(get_current_user),
+    _: str = Depends(verificar_api_key),
 ):
     envio = session.get(Envio, envio_id)
     if not envio:
@@ -108,7 +108,23 @@ def cambiar_estado(
             detail=f"No se puede cambiar de {envio.estado} a {cambio.estado}",
         )
     envio.estado = cambio.estado
+    historial = HistorialEstado(envio_id=envio_id, estado=cambio.estado)
     session.add(envio)
+    session.add(historial)
     session.commit()
     session.refresh(envio)
     return envio
+
+
+@router.get("/{envio_id}/historial", summary="Historial de estados de un envío")
+def historial_envio(envio_id: int, session: Session = Depends(get_session)):
+    """Retorna todos los cambios de estado de un envío, ordenados cronológicamente."""
+    envio = session.get(Envio, envio_id)
+    if not envio:
+        raise HTTPException(status_code=404, detail="Envío no encontrado")
+    historial = session.exec(
+        select(HistorialEstado)
+        .where(HistorialEstado.envio_id == envio_id)
+        .order_by(HistorialEstado.fecha)
+    ).all()
+    return historial
