@@ -11,7 +11,9 @@ ICONOS_ESTADO = {
 
 def mostrar():
     st.title("Rastreo de Envíos")
-    st.caption("Ingresa el número de envío para ver su estado actual e historial.")
+
+    if "ultimo_rastreo" not in st.session_state:
+        st.session_state.ultimo_rastreo = None
 
     col_input, col_btn = st.columns([3, 1])
     envio_id = col_input.number_input(
@@ -20,8 +22,11 @@ def mostrar():
     buscar = col_btn.button("Rastrear", use_container_width=True)
 
     if buscar:
-        _mostrar_rastreo(int(envio_id))
+        st.session_state.ultimo_rastreo = int(envio_id)
 
+    if st.session_state.ultimo_rastreo:
+        _mostrar_rastreo(st.session_state.ultimo_rastreo)
+        
 
 def _mostrar_rastreo(envio_id: int):
     try:
