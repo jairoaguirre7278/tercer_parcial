@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from .database import create_db_and_tables
-from .routers import envios, clientes
+from .routers import envios, clientes, conductores, auth
 
 
 @asynccontextmanager
@@ -56,9 +56,10 @@ async def server_error_handler(request: Request, exc):
     )
 
 
+app.include_router(auth.router)
 app.include_router(clientes.router)
 app.include_router(envios.router)
-
+app.include_router(conductores.router)
 
 @app.get("/")
 def root():
