@@ -1,6 +1,7 @@
 from typing import Optional, List
 from enum import Enum
 from sqlmodel import SQLModel, Field, Relationship
+from datetime import datetime
 
 
 class EstadoEnvio(str, Enum):
@@ -67,3 +68,11 @@ class ConductorRuta(SQLModel, table=True):
     ruta_id: Optional[int] = Field(
         default=None, foreign_key="ruta.id", primary_key=True
     )
+
+
+class HistorialEstado(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    envio_id: int = Field(foreign_key="envio.id")
+    estado: EstadoEnvio
+    fecha: datetime = Field(default_factory=datetime.utcnow)
+    nota: Optional[str] = Field(default=None)
